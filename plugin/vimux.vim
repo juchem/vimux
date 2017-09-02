@@ -41,7 +41,7 @@ function! VimuxRunCommand(command, ...)
     let l:autoreturn = a:1
   endif
 
-  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u")
+  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u C-k")
   let g:VimuxLastCommand = a:command
 
   call VimuxSendKeys(resetSequence)
@@ -117,16 +117,34 @@ function! VimuxInspectRunner()
   call _VimuxTmux("copy-mode")
 endfunction
 
+function! VimuxCopyModeRunner()
+  call _VimuxTmux("copy-mode -t ".g:VimuxRunnerIndex)
+endfunction
+
+function! VimuxSendCopyModeKeys(keys)
+  call _VimuxTmux("copy-mode -t ".g:VimuxRunnerIndex)
+  call VimuxSendKeys(a:keys)
+endfunction
+
+function! VimuxSendCopyModeText(text)
+  call _VimuxTmux("copy-mode -t ".g:VimuxRunnerIndex)
+  call VimuxSendText(a:text)
+endfunction
+
 function! VimuxScrollUpInspect()
-  call VimuxInspectRunner()
-  call _VimuxTmux("last-"._VimuxRunnerType())
-  call VimuxSendKeys("C-u")
+  call VimuxSendCopyModeKeys("C-u")
 endfunction
 
 function! VimuxScrollDownInspect()
-  call VimuxInspectRunner()
-  call _VimuxTmux("last-"._VimuxRunnerType())
-  call VimuxSendKeys("C-d")
+  call VimuxSendCopyModeKeys("C-d")
+endfunction
+
+function! VimuxScrollTopInspect()
+  call VimuxSendCopyModeText("gg")
+endfunction
+
+function! VimuxScrollBottomInspect()
+  call VimuxSendCopyModeText("G")
 endfunction
 
 function! VimuxInterruptRunner()
