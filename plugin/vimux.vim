@@ -31,6 +31,11 @@ function! VimuxRunLastCommand()
   endif
 endfunction
 
+function! VimuxResetRunner()
+  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u")
+  call VimuxSendKeys(resetSequence)
+endfunction
+
 function! VimuxRunCommand(command, ...)
   if !exists("g:VimuxRunnerIndex") || _VimuxHasRunner(g:VimuxRunnerIndex) == -1
     call VimuxOpenRunner()
@@ -41,10 +46,9 @@ function! VimuxRunCommand(command, ...)
     let l:autoreturn = a:1
   endif
 
-  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u")
   let g:VimuxLastCommand = a:command
 
-  call VimuxSendKeys(resetSequence)
+  call VimuxResetRunner()
   call VimuxSendText(a:command)
 
   if l:autoreturn == 1
