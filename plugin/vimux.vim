@@ -41,7 +41,7 @@ function! VimuxRunCommand(command, ...)
     let l:autoreturn = a:1
   endif
 
-  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u")
+  let resetSequence = _VimuxOption("g:VimuxResetSequence", "q C-u C-k")
   let g:VimuxLastCommand = a:command
 
   call VimuxSendKeys(resetSequence)
