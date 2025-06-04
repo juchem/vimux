@@ -32,7 +32,7 @@ function! VimuxRunLastCommand()
 endfunction
 
 function! VimuxRunCommand(command, ...)
-  if !exists("g:VimuxRunnerIndex") || _VimuxHasRunner(g:VimuxRunnerIndex) == -1
+  if !exists("g:VimuxRunnerIndex") || _VimuxHasRunner(g:VimuxRunnerIndex) == 0
     call VimuxOpenRunner()
   endif
 
@@ -58,7 +58,12 @@ endfunction
 
 function! VimuxSendKeys(keys)
   if exists("g:VimuxRunnerIndex")
-    call _VimuxTmux("send-keys -t ".g:VimuxRunnerIndex." ".a:keys)
+    let l:target = g:VimuxRunnerIndex
+    if exists("g:VimuxTargetSession")
+      let l:target = g:VimuxTargetSession.".".g:VimuxRunnerIndex
+    endif
+    let l:command = "send-keys -t ".l:target." ".a:keys
+    call _VimuxTmux(l:command)
   else
     echo "No vimux runner pane/window. Create one with VimuxOpenRunner"
   endif
@@ -115,6 +120,18 @@ endfunction
 function! VimuxInspectRunner()
   call _VimuxTmux("select-"._VimuxRunnerType()." -t ".g:VimuxRunnerIndex)
   call _VimuxTmux("copy-mode")
+endfunction
+
+function! VimuxSetTargetRunnerIndex(target)
+  let g:VimuxRunnerIndex = a:target
+endfunction
+
+function! VimuxSetTargetSession(target)
+  let l:changed = !exists("g:VimuxTargetSession") || g:VimuxTargetSession != a:target
+  let g:VimuxTargetSession = a:target
+  if l:changed
+    let g:VimuxRunnerIndex = -1
+  endif
 endfunction
 
 function! VimuxCopyModeRunner()
@@ -189,9 +206,16 @@ function! _VimuxTmuxWindowIndex()
 endfunction
 
 function! _VimuxNearestIndex()
-  let views = split(_VimuxTmux("list-"._VimuxRunnerType()."s"), "\n")
+  let l:command = ''
+  if exists("g:VimuxTargetSession")
+    let l:command = "list-"._VimuxRunnerType()."s -t ".g:VimuxTargetSession
+  else
+    let l:command = "list-"._VimuxRunnerType()."s"
+  endif
 
-  for view in views
+  let l:views = split(_VimuxTmux(l:command), "\n")
+
+  for view in l:views
     if match(view, "(active)") == -1
       return split(view, ":")[0]
     endif
@@ -217,5 +241,9 @@ function! _VimuxTmuxProperty(property)
 endfunction
 
 function! _VimuxHasRunner(index)
-  return match(_VimuxTmux("list-"._VimuxRunnerType()."s -a"), a:index.":")
+  if exists("g:VimuxTargetSession")
+    return match(_VimuxTmux("list-"._VimuxRunnerType()."s -t ".g:VimuxTargetSession), a:index.":")
+  else
+    return match(_VimuxTmux("list-"._VimuxRunnerType()."s -a"), a:index.":")
+  endif
 endfunction
